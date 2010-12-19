@@ -188,6 +188,11 @@ static int add_node2(suffix_tree_node *walk, suffix_tree_node *node) {
 	node->suffix.str += walk->suffix.len;
 	node->suffix.len -= walk->suffix.len;
 
+	if (node->suffix.len == 0) {
+		destroy_suffix_tree_node(node);
+		return 1;
+	}
+
 	if (!has_children(walk)) {
 		add_child_node(walk, node);
 		return 1;

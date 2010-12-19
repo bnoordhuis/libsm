@@ -16,4 +16,6 @@ suffix_tree *suffix_tree_create2(suffix_tree_string strings[], int n_strings);
 
 void suffix_tree_destroy(suffix_tree *tree);
 
+const char *suffix_tree_search(suffix_tree *tree, const char *pattern, int len);
+
 #endif	/* suffix_tree.h */

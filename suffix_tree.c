@@ -30,6 +30,12 @@ static int find_split_point(suffix_tree_string *haystack, suffix_tree_string *ne
 
 static int split_node(suffix_tree_node *parent, suffix_tree_node *child0, int offset);
 
+static const char *search(
+		suffix_tree_node *node,
+		const char *const orig_pattern,
+		const char *pattern,
+		int len);
+
 suffix_tree *suffix_tree_create(const char *strings[], int n_strings) {
 	suffix_tree_string *real_strings;
 	suffix_tree *tree;
@@ -117,6 +123,55 @@ void suffix_tree_destroy(suffix_tree *tree) {
 	destroy_suffix_tree_node(tree->root);
 
 	free(tree);
+}
+
+const char *suffix_tree_search(suffix_tree *tree, const char *pattern, int len) {
+	assert(tree != NULL);
+	assert(pattern != NULL);
+
+	if (len == 0) {
+		return NULL;
+	}
+
+	if (tree->root == NULL) {
+		return NULL;
+	}
+
+	return search(tree->root, pattern, pattern, len);
+}
+
+static const char *search(
+		suffix_tree_node *node,
+		const char *const orig_pattern,
+		const char *pattern,
+		int len)
+{
+	assert(pattern != NULL);
+	assert(len > 0);
+
+	if (node == NULL) {
+		return NULL;
+	}
+
+	if (len <= node->suffix.len) {
+		if (0 != memcmp(node->suffix.str, pattern, len)) {
+			return search(node->next_sibling, orig_pattern, pattern, len);
+		}
+		else {
+			return node->suffix.str - (pattern - orig_pattern);
+		}
+	}
+	else {
+		if (0 != memcmp(node->suffix.str, pattern, node->suffix.len)) {
+			return search(node->next_sibling, orig_pattern, pattern, len);
+		}
+		else {
+			pattern += node->suffix.len;
+			len -= node->suffix.len;
+
+			return search(node->first_child, orig_pattern, pattern, len);
+		}
+	}
 }
 
 static void destroy_suffix_tree_node(suffix_tree_node *node) {
@@ -320,7 +375,11 @@ void suffix_tree_dump(suffix_tree *tree, FILE *stream) {
 
 #ifdef RUN_UNIT_TESTS
 
+static const char longtext_s[] = "Constructing such a tree for the string S takes time and space linear in the length of S. Once constructed, several operations can be performed quickly, for instance locating a substring in S, locating a substring if a certain number of mistakes are allowed, locating matches for a regular expression pattern etc. Suffix trees also provided one of the first linear-time solutions for the longest common substring problem. These speedups come at a cost: storing a string's suffix tree typically requires significantly more space than storing the string itself.";
+
 int main(void) {
+	suffix_tree_string longtext = { longtext_s, sizeof(longtext_s) - 1 };
+
 	{
 		suffix_tree_string a = { "papua", 5 };
 		suffix_tree_string b = { "pua", 3 };
@@ -373,13 +432,34 @@ int main(void) {
 	}
 
 	{
-		static const char input[] = "Constructing such a tree for the string S takes time and space linear in the length of S. Once constructed, several operations can be performed quickly, for instance locating a substring in S, locating a substring if a certain number of mistakes are allowed, locating matches for a regular expression pattern etc. Suffix trees also provided one of the first linear-time solutions for the longest common substring problem. These speedups come at a cost: storing a string's suffix tree typically requires significantly more space than storing the string itself.";
-		suffix_tree_string s = { input, sizeof(input) - 1 };
-		suffix_tree *tree = suffix_tree_create2(&s, 1);
+		suffix_tree *tree = suffix_tree_create2(&longtext, 1);
+		const char *search;
 
-		suffix_tree_dump(tree, stdout);
+		search = suffix_tree_search(tree, "", 0);
+		assert(search == NULL);
+
+		search = suffix_tree_search(tree, "xyzzy", 5);
+		assert(search == NULL);
+
+		search = suffix_tree_search(tree, "Constructing", sizeof("Constructing") - 1);
+		assert(search != NULL);
+		assert(search == longtext.str);
+
+		search = suffix_tree_search(tree, "onstructing", sizeof("onstructing") - 1);
+		assert(search != NULL);
+		assert(search == longtext.str + 1);
+
+		search = suffix_tree_search(tree, "itself", 5);
+		assert(search != NULL);
+		assert(search == longtext.str + longtext.len - sizeof("itself."));
+
+		search = suffix_tree_search(tree, "itself.", 5);
+		assert(search != NULL);
+		assert(search == longtext.str + longtext.len - sizeof("itself."));
+
 		suffix_tree_destroy(tree);
 	}
+
 	return 0;
 }
 

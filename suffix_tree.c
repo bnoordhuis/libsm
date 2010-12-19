@@ -282,11 +282,11 @@ static int split_node(suffix_tree_node *parent, suffix_tree_node *child0, int of
 
 #include <stdio.h>
 
-void suffix_tree_node_dump(suffix_tree_node *node, FILE *stream, int level) {
-	int i;
+int suffix_tree_node_dump(suffix_tree_node *node, FILE *stream, int level) {
+	int i, n;
 
 	if (node == NULL) {
-		return;
+		return 0;
 	}
 
 	for (i = 0; i < level; i++) {
@@ -297,15 +297,23 @@ void suffix_tree_node_dump(suffix_tree_node *node, FILE *stream, int level) {
 
 	putc('\n', stream);
 
-	suffix_tree_node_dump(node->first_child, stream, level + 1);
+	n = 1;
 
-	suffix_tree_node_dump(node->next_sibling, stream, level);
+	n += suffix_tree_node_dump(node->first_child, stream, level + 1);
+
+	n += suffix_tree_node_dump(node->next_sibling, stream, level);
+
+	return n;
 }
 
 void suffix_tree_dump(suffix_tree *tree, FILE *stream) {
+	int n;
+
 	assert(tree != NULL);
 
-	suffix_tree_node_dump(tree->root, stream, 0);
+	n = suffix_tree_node_dump(tree->root, stream, 0);
+
+	printf("*** %d nodes in tree.\n", n);
 }
 
 #define RUN_UNIT_TESTS
@@ -364,6 +372,14 @@ int main(void) {
 		suffix_tree_destroy(tree);
 	}
 
+	{
+		static const char input[] = "Constructing such a tree for the string S takes time and space linear in the length of S. Once constructed, several operations can be performed quickly, for instance locating a substring in S, locating a substring if a certain number of mistakes are allowed, locating matches for a regular expression pattern etc. Suffix trees also provided one of the first linear-time solutions for the longest common substring problem. These speedups come at a cost: storing a string's suffix tree typically requires significantly more space than storing the string itself.";
+		suffix_tree_string s = { input, sizeof(input) - 1 };
+		suffix_tree *tree = suffix_tree_create2(&s, 1);
+
+		suffix_tree_dump(tree, stdout);
+		suffix_tree_destroy(tree);
+	}
 	return 0;
 }
 

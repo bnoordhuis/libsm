@@ -280,7 +280,37 @@ static int split_node(suffix_tree_node *parent, suffix_tree_node *child0, int of
 	return 1;
 }
 
-#ifndef RUN_UNIT_TESTS
+#include <stdio.h>
+
+void suffix_tree_node_dump(suffix_tree_node *node, FILE *stream, int level) {
+	int i;
+
+	if (node == NULL) {
+		return;
+	}
+
+	for (i = 0; i < level; i++) {
+		putc('-', stream);
+	}
+
+	fwrite(node->suffix.str, 1, node->suffix.len, stream);
+
+	putc('\n', stream);
+
+	suffix_tree_node_dump(node->first_child, stream, level + 1);
+
+	suffix_tree_node_dump(node->next_sibling, stream, level);
+}
+
+void suffix_tree_dump(suffix_tree *tree, FILE *stream) {
+	assert(tree != NULL);
+
+	suffix_tree_node_dump(tree->root, stream, 0);
+}
+
+#define RUN_UNIT_TESTS
+
+#ifdef RUN_UNIT_TESTS
 
 int main(void) {
 	{

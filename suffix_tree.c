@@ -348,6 +348,22 @@ int main(void) {
 		assert(n == 3);
 	}
 
+	{
+		suffix_tree_string s = { "papua", 5 };
+		suffix_tree *tree = suffix_tree_create2(&s, 1);
+
+		suffix_tree_dump(tree, stdout);
+		suffix_tree_destroy(tree);
+	}
+
+	{
+		suffix_tree_string s = { "mississippi", 11 };
+		suffix_tree *tree = suffix_tree_create2(&s, 1);
+
+		suffix_tree_dump(tree, stdout);
+		suffix_tree_destroy(tree);
+	}
+
 	return 0;
 }
 

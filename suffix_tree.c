@@ -250,6 +250,15 @@ static int split_node(suffix_tree_node *parent, suffix_tree_node *child0, int of
 	assert(offset > 0);
 	assert(offset < parent->suffix.len);
 
+	assert(parent->suffix.len > 1);
+	assert(child0->suffix.len > 0);
+
+	/* don't split if the child is a single-character string */
+	if (child0->suffix.len == 1) {
+		add_child_node(parent, child0);
+		return 1;
+	}
+
 	child1 = new_suffix_tree_node(parent->suffix.str + offset, parent->suffix.len - offset);
 
 	if (child1 == NULL) {
@@ -260,6 +269,10 @@ static int split_node(suffix_tree_node *parent, suffix_tree_node *child0, int of
 	child0->suffix.len -= offset;
 
 	parent->suffix.len = offset;
+
+	assert(parent->suffix.len > 0);
+	assert(child0->suffix.len > 0);
+	assert(child1->suffix.len > 0);
 
 	add_child_node(parent, child0);
 	add_child_node(parent, child1);

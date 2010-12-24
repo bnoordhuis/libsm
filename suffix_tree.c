@@ -18,8 +18,6 @@ static suffix_tree_node *new_suffix_tree_node(const char *str, int len);
 
 static void destroy_suffix_tree_node(suffix_tree_node *node);
 
-static int has_children(suffix_tree_node *node);
-
 static int add_node(suffix_tree *tree, suffix_tree_node *node);
 
 static int add_node2(suffix_tree_node *walk, suffix_tree_node *node);
@@ -229,31 +227,36 @@ static int add_node2(suffix_tree_node *walk, suffix_tree_node *node) {
 		return add_node2(walk->next_sibling, node);
 	}
 
-	/* walk.suffix and node.suffix are identical */
-	if (offset == walk->suffix.len && offset == node->suffix.len) {
-		return 1;
-	}
-
-	/* walk='papua', node='pua' - split in walk='p', child[0]='apua', child[1]='ua' */
-	if (node->suffix.len < walk->suffix.len) {
-		return split_node(walk, node, offset);
-	}
-
-	/* walk='p', node='pua' */
-	node->suffix.str += walk->suffix.len;
-	node->suffix.len -= walk->suffix.len;
-
-	if (node->suffix.len == 0) {
+	/* node is equal to or is a substring of walk (ex. node='pa' and walk='papa') */
+	if (offset == node->suffix.len) {
 		destroy_suffix_tree_node(node);
 		return 1;
 	}
 
-	if (!has_children(walk)) {
-		add_child_node(walk, node);
-		return 1;
+	/* walk is a substring of node (ex. node='papa' and walk='pa') strip common prefix from node and continue */
+	if (offset == walk->suffix.len) {
+		node->suffix.str += offset;
+		node->suffix.len -= offset;
+
+		assert(node->suffix.len > 0);
+
+		if (walk->first_child == NULL) {
+			walk->first_child = node;
+			return 1;
+		}
+
+		return add_node2(walk->first_child, node);
 	}
 
-	return add_node2(walk->first_child, node);
+	/* node and walk share a prefix so split the node
+	 * (ex. node='papa', walk='papua' becomes walk='pap', child[0]='a', child[1]='ua')
+	 */
+	if (!split_node(walk, node, offset)) {
+		destroy_suffix_tree_node(node);
+		return 0;
+	}
+
+	return 1;
 }
 
 static int find_split_point(suffix_tree_string *haystack, suffix_tree_string *needle) {
@@ -279,10 +282,6 @@ static int find_split_point(suffix_tree_string *haystack, suffix_tree_string *ne
 	}
 
 	return k;
-}
-
-static int has_children(suffix_tree_node *node) {
-	return node->first_child != NULL;
 }
 
 static void add_child_node(suffix_tree_node *parent, suffix_tree_node *child) {
@@ -451,11 +450,11 @@ int main(void) {
 
 		search = suffix_tree_search(tree, "itself", 5);
 		assert(search != NULL);
-		assert(search == longtext.str + longtext.len - sizeof("itself."));
+		assert(search == longtext.str + longtext.len - sizeof("itself.") + 1);
 
 		search = suffix_tree_search(tree, "itself.", 5);
 		assert(search != NULL);
-		assert(search == longtext.str + longtext.len - sizeof("itself."));
+		assert(search == longtext.str + longtext.len - sizeof("itself.") + 1);
 
 		suffix_tree_destroy(tree);
 	}

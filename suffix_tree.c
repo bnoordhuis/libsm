@@ -426,16 +426,30 @@ int main(void) {
 	{
 		suffix_tree_string s = { "papua", 5 };
 		suffix_tree *tree = suffix_tree_create2(&s, 1);
-
-		suffix_tree_dump(tree, stdout);
 		suffix_tree_destroy(tree);
 	}
 
 	{
 		suffix_tree_string s = { "mississippi", 11 };
 		suffix_tree *tree = suffix_tree_create2(&s, 1);
+		suffix_tree_destroy(tree);
+	}
 
-		suffix_tree_dump(tree, stdout);
+	/* triggers bug in tree construction where len=126 works but len=127 doesn't */
+	{
+		const char *search;
+		suffix_tree *tree;
+
+		tree = suffix_tree_create_single(longtext_s, 126);
+		search = suffix_tree_search(tree, "onstructing", sizeof("onstructing") - 1);
+		assert(search != NULL);
+		assert(search == longtext.str + 1);
+		suffix_tree_destroy(tree);
+
+		tree = suffix_tree_create_single(longtext_s, 127);
+		search = suffix_tree_search(tree, "onstructing", sizeof("onstructing") - 1);
+		assert(search != NULL);
+		assert(search == longtext.str + 1);
 		suffix_tree_destroy(tree);
 	}
 

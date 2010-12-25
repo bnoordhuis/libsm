@@ -238,6 +238,7 @@ static int add_node2(suffix_tree_node *walk, suffix_tree_node *node) {
 
 	/* node is equal to or is a substring of walk (ex. node='pa' and walk='papa') */
 	if (offset == node->suffix.len) {
+		/* pretend we added the node (FIXME this is brittle code, we can do better than this) */
 		destroy_suffix_tree_node(node);
 		return 1;
 	}
@@ -261,7 +262,6 @@ static int add_node2(suffix_tree_node *walk, suffix_tree_node *node) {
 	 * (ex. node='papa', walk='papua' becomes walk='pap', child[0]='a', child[1]='ua')
 	 */
 	if (!split_node(walk, node, offset)) {
-		destroy_suffix_tree_node(node);
 		return 0;
 	}
 

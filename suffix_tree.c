@@ -34,6 +34,15 @@ static const char *search(
 		const char *pattern,
 		int len);
 
+suffix_tree *suffix_tree_create_single(const char *string, int len) {
+	suffix_tree_string s;
+
+	s.str = string;
+	s.len = len;
+
+	return suffix_tree_create2(&s, 1);
+}
+
 suffix_tree *suffix_tree_create(const char *strings[], int n_strings) {
 	suffix_tree_string *real_strings;
 	suffix_tree *tree;

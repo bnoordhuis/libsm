@@ -10,6 +10,8 @@ struct suffix_tree;
 
 typedef struct suffix_tree suffix_tree;
 
+suffix_tree *suffix_tree_create_single(const char *string, int len);
+
 suffix_tree *suffix_tree_create(const char *strings[], int n_strings);
 
 suffix_tree *suffix_tree_create2(suffix_tree_string strings[], int n_strings);
